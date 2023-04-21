@@ -50,9 +50,12 @@
             font-weight: bold;
             cursor: pointer;
             border-radius: 5px;
+            transition: .3s;
+        
         }
         .form-group input[type="submit"]:hover {
             background-color: #003febdd;
+            transform: translate3d(0, 5px, 0);
         }
         .form-group span {
             color: red;
@@ -80,6 +83,21 @@
         background-color: #047e18;
       }
 
+      .loader {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6) url('https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/0.16.1/images/loader-large.gif') no-repeat center center;
+}
+
+.loader.show {
+  display: block;
+}
+
     </style>
 </head>
 <body>
@@ -102,15 +120,28 @@
             <div class="form-group">
                 <input type="submit" value="送信">
             </div>
+            <div class="loader"></div>
         </form>
     </div>
-
+  
     <a class="button" href="answers.html">リクエスト一覧</a>
 </body>
 </html>
 
 <script type="text/javascript">
     let submitted = false;
+    const form = document.querySelector('form');
+const loader = document.querySelector('.loader');
+
+form.addEventListener('submit', function(event) {
+  event.preventDefault(); // デフォルトのフォーム送信イベントをキャンセルする
+  loader.classList.add('show'); // ローディングスピナーを表示する
+  setTimeout(function() {
+    form.submit(); // フォームを送信する
+  }, 2000); // 2秒後に送信する（適宜変更してください）
+});
+
+
 </script>
 <iframe
     name="hidden_iframe"
