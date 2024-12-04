@@ -136,18 +136,33 @@
 </html>
 
 <script type="text/javascript">
+<script type="text/javascript">
     let submitted = false;
+    let isWaiting = false; // 連投防止用フラグ
     const form = document.querySelector('form');
-const loader = document.querySelector('.loader');
+    const loader = document.querySelector('.loader');
 
-form.addEventListener('submit', function(event) {
-  event.preventDefault(); // デフォルトのフォーム送信イベントをキャンセルする
-  loader.classList.add('show'); // ローディングスピナーを表示する
-  setTimeout(function() {
-    form.submit(); // フォームを送信する
-  }, 2000); // 2秒後に送信する（適宜変更してください）
-});
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // デフォルトのフォーム送信をキャンセル
 
+        if (isWaiting) {
+            alert("リクエストを送信しました。次の送信は3分間お待ちください。");
+            return;
+        }
+
+        loader.classList.add('show'); // ローディングスピナーを表示
+
+        setTimeout(function() {
+            form.submit(); // フォームを送信
+            loader.classList.remove('show'); // ローディングスピナーを非表示
+            submitted = true;
+            isWaiting = true; // 連投防止フラグを有効化
+            setTimeout(() => {
+                isWaiting = false; // 3分後に連投可能に
+            }, 180000); // 180000ミリ秒 = 3分
+        }, 2000); // 送信までの遅延時間（ここでは2秒）
+    });
+</script>
 
 </script>
 <iframe
