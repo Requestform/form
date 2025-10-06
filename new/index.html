@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>楽曲リクエスト</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+      --blue-500: #0f62fe;
+      --blue-600: #0353e9;
+      --green-500: #24a148;
+      --gray-100: #f5f7fb;
+      --gray-200: #e3e6ef;
+      --gray-700: #384056;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Noto Sans JP', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8f9fb;
+      color: #20263a;
+    }
+    header {
+      background: var(--blue-500);
+      color: #fff;
+      padding: 16px 20px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 { margin: 0; font-size: 1.6rem; font-weight: 600; }
+    main { max-width: 820px; margin: 32px auto; padding: 0 16px 48px; }
+    section { background: #fff; border: 1px solid var(--gray-200); border-radius: 18px; padding: 24px; box-shadow: 0 10px 30px rgba(15, 98, 254, 0.08); margin-bottom: 28px; }
+    h2 { margin: 0 0 16px; font-size: 1.3rem; color: var(--blue-500); }
+    p { line-height: 1.7; }
+
+    form {
+      display: grid;
+      gap: 16px;
+    }
+    label { font-weight: 600; display: block; margin-bottom: 6px; }
+    input, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      font-size: 1rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--blue-500);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.12);
+    }
+    button {
+      width: 100%;
+      height: 48px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      background: var(--blue-500);
+      color: #fff;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-0.5px);
+      box-shadow: 0 6px 16px rgba(15, 98, 254, 0.25);
+    }
+    button:disabled {
+      background: #9bb7ff;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-weight: 600;
+      min-height: 22px;
+    }
+    .status.success { color: var(--green-500); }
+    .status.error { color: #d12f32; }
+
+    .inline-warning {
+      margin-top: -6px;
+      font-size: 0.85rem;
+      color: #d12f32;
+      min-height: 18px;
+    }
+
+    .table-toggle {
+      margin-top: 12px;
+      background: #fff;
+      color: var(--blue-500);
+      border: 2px solid var(--blue-500);
+    }
+    .table-toggle:hover:not(:disabled) {
+      background: rgba(15,98,254,0.08);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .table-card { display: none; margin-top: 20px; }
+    .table-card.open { display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    thead { background: var(--gray-100); }
+    th, td { padding: 12px; border-bottom: 1px solid #ebeff6; text-align: left; }
+    th { font-weight: 600; color: var(--gray-700); }
+    tbody tr:nth-child(even) { background: #fafbff; }
+
+    .table-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .table-controls button { width: auto; min-width: 120px; height: 40px; }
+    .table-controls span { font-size: 0.95rem; color: var(--gray-700); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--gray-700);
+    }
+    .badge strong { color: var(--blue-500); }
+
+    .spinner { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #d5dcff; border-top-color: var(--blue-500); animation: spin 0.9s linear infinite; margin: 18px auto; display: none; }
+    .spinner.show { display: block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 640px) {
+      section { padding: 20px; border-radius: 14px; }
+      header h1 { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>楽曲リクエスト</h1>
+  </header>
+  <main>
+    <section>
+      <h2>リクエストフォーム</h2>
+      <p>リクエストは1時間に3回まで送信できます。同じ曲の重複応募はご遠慮ください。</p>
+      <form id="requestForm">
+        <div>
+          <label for="title">楽曲名</label>
+          <input id="title" name="title" autocomplete="off" required />
+        </div>
+        <div>
+          <label for="artist">アーティスト名</label>
+          <input id="artist" name="artist" autocomplete="off" required />
+        </div>
+        <div>
+          <label for="youtube">YouTube URL</label>
+          <input id="youtube" name="youtube" autocomplete="off" placeholder="https://www.youtube.com/watch?v=..." required />
+          <div class="inline-warning" id="urlWarning"></div>
+        </div>
+        <button type="submit" id="submitBtn">リクエストを送信</button>
+        <div id="formStatus" class="status"></div>
+      </form>
+      <p class="badge"><strong id="remainingCount">3</strong>回 / 1時間までリクエストできます</p>
+    </section>
+
+    <section>
+      <h2>みんなのリクエスト</h2>
+      <button type="button" class="table-toggle" id="toggleListBtn">みんなのリクエストを表示</button>
+      <div class="table-card" id="requestListCard">
+        <div class="spinner" id="listSpinner"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>リクエスト日</th>
+              <th>楽曲名</th>
+              <th>アーティスト</th>
+              <th>YouTube</th>
+            </tr>
+          </thead>
+          <tbody id="requestTbody">
+          </tbody>
+        </table>
+        <div class="table-controls">
+          <button type="button" id="prevPage">前のページ</button>
+          <span id="pageInfo"></span>
+          <button type="button" id="nextPage">次のページ</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script>
+    const { BASE_URL } = window.REQUEST_CONFIG || {};
+    const RATE_LIMIT_KEY = 'music-request-submissions';
+    const LIMIT_PER_HOUR = 3;
+    const PAGE_SIZE = 10;
+    let tableState = { page: 1, totalPages: 1, initialized: false };
+    const duplicateCache = new Map();
+
+    function toKey(title, artist) {
+      const normTitle = (title || '').trim().toLowerCase();
+      const normArtist = (artist || '').trim().toLowerCase();
+      if (!normTitle || !normArtist) return '';
+      return `${normTitle}::${normArtist}`;
+    }
+
+    async function isDuplicateRequest(title, artist) {
+      if (!BASE_URL) return false;
+      const key = toKey(title, artist);
+      if (!key) return false;
+      if (duplicateCache.has(key) && duplicateCache.get(key) === false) {
+        return false;
+      }
+      try {
+        const url = new URL(BASE_URL);
+        url.searchParams.set('action', 'checkDuplicate');
+        url.searchParams.set('title', title);
+        url.searchParams.set('artist', artist);
+        const res = await fetch(url.toString());
+        const data = await res.json();
+        const isDup = !!(data && data.isDuplicate);
+        duplicateCache.set(key, isDup);
+        return isDup;
+      } catch (error) {
+        console.error(error);
+        return false;
+      }
+    }
+
+    function sanitizeUrl(url) {
+      if (!url) return '';
+      try { return new URL(url).toString(); } catch (_) { return ''; }
+    }
+
+    function isValidYouTubeUrl(url) {
+      if (!url) return false;
+      try {
+        const u = new URL(url);
+        if (u.hostname.includes('youtube.com')) {
+          return !!(u.searchParams.get('v') || u.pathname.startsWith('/shorts/') || u.pathname.startsWith('/live/'));
+        }
+        if (u.hostname === 'youtu.be') {
+          return u.pathname.length > 1;
+        }
+        return false;
+      } catch (_) { return false; }
+    }
+
+    function getSubmissions() {
+      try {
+        const raw = localStorage.getItem(RATE_LIMIT_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return [];
+        return arr.map(Number).filter(n => !isNaN(n));
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function setSubmissions(arr) {
+      localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(arr));
+    }
+
+    function pruneSubmissions() {
+      const hourAgo = Date.now() - 60 * 60 * 1000;
+      const filtered = getSubmissions().filter(ts => ts >= hourAgo);
+      setSubmissions(filtered);
+      return filtered;
+    }
+
+    function updateRemaining() {
+      const submissions = pruneSubmissions();
+      const remaining = Math.max(0, LIMIT_PER_HOUR - submissions.length);
+      const remainingEl = document.getElementById('remainingCount');
+      if (remainingEl) remainingEl.textContent = remaining;
+      return remaining;
+    }
+
+    function renderTable(items) {
+      const tbody = document.getElementById('requestTbody');
+      tbody.innerHTML = '';
+      if (!items.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 4;
+        td.textContent = '表示できるリクエストはありません。';
+        td.style.textAlign = 'center';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+      items.forEach(item => {
+        const key = toKey(item.title, item.artist);
+        if (key) duplicateCache.set(key, true);
+        const tr = document.createElement('tr');
+        const requestedAt = item.requestedAt ? new Date(item.requestedAt) : null;
+        const dateText = requestedAt ? requestedAt.toLocaleString('ja-JP', { hour12: false }) : '-';
+        tr.innerHTML = `
+          <td>${dateText}</td>
+          <td>${item.title || ''}</td>
+          <td>${item.artist || ''}</td>
+          <td>${item.youtubeUrl ? `<a href="${item.youtubeUrl}" target="_blank" rel="noopener">リンク</a>` : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadRequests(page = 1) {
+      if (!BASE_URL) return;
+      const spinner = document.getElementById('listSpinner');
+      spinner.classList.add('show');
+      try {
+        const url = new URL(BASE_URL);
+        url.searchParams.set('action', 'listRequests');
+        url.searchParams.set('page', page);
+        url.searchParams.set('pageSize', PAGE_SIZE);
+        const res = await fetch(url.toString());
+        const data = await res.json();
+        renderTable(data.items || []);
+        tableState.page = data.page || 1;
+        tableState.totalPages = data.totalPages || 1;
+        updatePageInfo();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        spinner.classList.remove('show');
+      }
+    }
+
+    function updatePageInfo() {
+      const { page, totalPages } = tableState;
+      const info = document.getElementById('pageInfo');
+      info.textContent = `${page} / ${totalPages} ページ`;
+      document.getElementById('prevPage').disabled = page <= 1;
+      document.getElementById('nextPage').disabled = page >= totalPages;
+    }
+
+    document.getElementById('toggleListBtn').addEventListener('click', () => {
+      const card = document.getElementById('requestListCard');
+      const open = card.classList.toggle('open');
+      document.getElementById('toggleListBtn').textContent = open ? 'リストを閉じる' : 'みんなのリクエストを表示';
+      if (open && !tableState.initialized) {
+        tableState.initialized = true;
+        loadRequests(1);
+      }
+    });
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (tableState.page > 1) {
+        loadRequests(tableState.page - 1);
+      }
+    });
+    document.getElementById('nextPage').addEventListener('click', () => {
+      if (tableState.page < tableState.totalPages) {
+        loadRequests(tableState.page + 1);
+      }
+    });
+
+    document.getElementById('requestForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!BASE_URL) return;
+      const statusEl = document.getElementById('formStatus');
+      statusEl.textContent = '';
+      statusEl.className = 'status';
+
+      const title = document.getElementById('title').value.trim();
+      const artist = document.getElementById('artist').value.trim();
+      const youtubeInput = document.getElementById('youtube');
+      const youtubeUrl = sanitizeUrl(youtubeInput.value.trim());
+      const warning = document.getElementById('urlWarning');
+
+      if (!isValidYouTubeUrl(youtubeUrl)) {
+        warning.textContent = '正しいYouTubeのURLを入力してください。';
+        return;
+      }
+      warning.textContent = '';
+
+      const isDup = await isDuplicateRequest(title, artist);
+      if (isDup) {
+        statusEl.textContent = 'この楽曲は既にリクエストされています。別の曲を選んでください。';
+        statusEl.classList.add('error');
+        return;
+      }
+
+      const remaining = updateRemaining();
+      if (remaining <= 0) {
+        statusEl.textContent = '1時間に3回までとなります。時間をおいて再度お試しください。';
+        statusEl.classList.add('error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+
+      try {
+        const form = new URLSearchParams();
+        form.set('action', 'addRequest');
+        form.set('title', title);
+        form.set('artist', artist);
+        form.set('youtubeUrl', youtubeUrl);
+
+        const res = await fetch(BASE_URL, { method: 'POST', body: form });
+        const data = await res.json();
+        if (data && data.status === 'ok') {
+          statusEl.textContent = 'リクエストを受け付けました！';
+          statusEl.classList.add('success');
+          document.getElementById('title').value = '';
+          document.getElementById('artist').value = '';
+          document.getElementById('youtube').value = '';
+          const submissions = pruneSubmissions();
+          submissions.push(Date.now());
+          setSubmissions(submissions);
+          updateRemaining();
+          const key = toKey(title, artist);
+          if (key) duplicateCache.set(key, true);
+          if (tableState.initialized) {
+            loadRequests(1);
+          }
+        } else {
+          statusEl.textContent = data && data.message ? data.message : '送信に失敗しました。';
+          statusEl.classList.add('error');
+        }
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = '送信中にエラーが発生しました。';
+        statusEl.classList.add('error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    updateRemaining();
+  </script>
+</body>
+</html>
