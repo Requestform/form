@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>楽曲リクエスト管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue-500: #0f62fe;
+      --blue-600: #0353e9;
+      --gray-050: #f3f6ff;
+      --gray-200: #dde3ee;
+      --gray-700: #3b4560;
+      --green-500: #24a148;
+      --red-500: #d12f32;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Noto Sans JP', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f7f9fc;
+      color: #22283d;
+    }
+    header {
+      background: linear-gradient(120deg, var(--blue-500), #4d83ff);
+      padding: 20px;
+      color: #fff;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(15, 98, 254, 0.2);
+    }
+    header h1 { margin: 0; font-size: 1.7rem; }
+
+    main { max-width: 960px; margin: 32px auto; padding: 0 16px 48px; display: grid; gap: 28px; }
+    section { background: #fff; border-radius: 18px; padding: 24px; border: 1px solid #e1e8f5; box-shadow: 0 10px 30px rgba(15, 98, 254, 0.07); }
+
+    h2 { margin: 0 0 16px; color: var(--blue-500); font-size: 1.25rem; }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      background: var(--blue-500);
+      color: #fff;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(15, 98, 254, 0.2);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .secondary-btn { background: #fff; color: var(--blue-500); border: 2px solid var(--blue-500); }
+    .secondary-btn:hover:not(:disabled) { background: rgba(15, 98, 254, 0.08); box-shadow: none; transform: none; }
+    .danger-btn { background: var(--red-500); }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.95rem; }
+    thead { background: var(--gray-050); }
+    th, td { padding: 12px; border-bottom: 1px solid #edf0f7; text-align: left; }
+    tbody tr:nth-child(even) { background: #fafcff; }
+    tbody tr:hover { background: #eef4ff; }
+
+    .table-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .table-controls button { min-width: 120px; }
+    .table-controls span { font-size: 0.92rem; color: var(--gray-700); }
+
+    .row-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .youtube-link { color: var(--blue-500); text-decoration: none; font-weight: 600; }
+
+    .spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid #d5dcff; border-top-color: var(--blue-500); animation: spin 0.9s linear infinite; margin: 18px auto; display: none; }
+    .spinner.show { display: block; }
+    .btn-spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #d5dcff; border-top-color: var(--blue-500); animation: spin 0.7s linear infinite; display: none; }
+    .loading .btn-spinner { display: inline-block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>楽曲リクエスト管理</h1>
+  </header>
+  <main>
+    <section>
+      <div class="flex-between">
+        <h2>未処理リスト</h2>
+        <button id="reloadPendingBtn" class="secondary-btn">最新に更新</button>
+      </div>
+      <div class="spinner" id="pendingSpinner"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>リクエスト日</th>
+            <th>楽曲名</th>
+            <th>アーティスト</th>
+            <th>YouTube</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="pendingTbody"></tbody>
+      </table>
+      <div class="table-controls">
+        <button id="pendingPrev" class="secondary-btn">前のページ</button>
+        <span id="pendingInfo"></span>
+        <button id="pendingNext" class="secondary-btn">次のページ</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="flex-between">
+        <h2>流した楽曲一覧</h2>
+        <div>
+          <button id="togglePlayedBtn" class="secondary-btn">一覧を開く</button>
+          <button id="reloadPlayedBtn" class="secondary-btn" disabled>再読み込み</button>
+        </div>
+      </div>
+      <div id="playedCard" style="display:none; margin-top: 16px;">
+        <div class="spinner" id="playedSpinner"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>再生日</th>
+              <th>楽曲名</th>
+              <th>アーティスト</th>
+              <th>YouTube</th>
+            </tr>
+          </thead>
+          <tbody id="playedTbody"></tbody>
+        </table>
+        <div class="table-controls">
+          <button id="playedPrev" class="secondary-btn">前のページ</button>
+          <span id="playedInfo"></span>
+          <button id="playedNext" class="secondary-btn">次のページ</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script>
+    const { BASE_URL, ADMIN_KEY } = window.REQUEST_CONFIG || {};
+    const PAGE_SIZE = 20;
+
+    const pendingState = { page: 1, totalPages: 1 };
+    const playedState = { page: 1, totalPages: 1, open: false };
+
+    function formatDate(value) {
+      if (!value) return '-';
+      try { return new Date(value).toLocaleString('ja-JP', { hour12: false }); }
+      catch (_) { return value; }
+    }
+
+    async function fetchJson(url, options = {}) {
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    }
+
+    function renderRows(tbody, items, includeActions = false) {
+      tbody.innerHTML = '';
+      if (!items.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = includeActions ? 5 : 4;
+        td.textContent = 'データはありません';
+        td.style.textAlign = 'center';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+      items.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${formatDate(item.requestedAt || item.playedAt)}</td>
+          <td>${item.title || ''}</td>
+          <td>${item.artist || ''}</td>
+          <td>${item.youtubeUrl ? `<a class="youtube-link" href="${item.youtubeUrl}" target="_blank" rel="noopener">リンク</a>` : '-'}</td>
+        `;
+        if (includeActions) {
+          const td = document.createElement('td');
+          td.className = 'row-actions';
+          const btn = document.createElement('button');
+          btn.textContent = '完了';
+          btn.className = 'danger-btn';
+          const spinner = document.createElement('span');
+          spinner.className = 'btn-spinner';
+          btn.addEventListener('click', () => markPlayed(item.id, btn, spinner));
+          td.appendChild(btn);
+          td.appendChild(spinner);
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updatePagination(state, infoEl, prevBtn, nextBtn) {
+      infoEl.textContent = `${state.page} / ${state.totalPages} ページ`;
+      prevBtn.disabled = state.page <= 1;
+      nextBtn.disabled = state.page >= state.totalPages;
+    }
+
+    async function loadPending(page = 1) {
+      if (!BASE_URL) return;
+      const spinner = document.getElementById('pendingSpinner');
+      spinner.classList.add('show');
+      try {
+        const url = new URL(BASE_URL);
+        url.searchParams.set('action', 'listRequests');
+        url.searchParams.set('page', page);
+        url.searchParams.set('pageSize', PAGE_SIZE);
+        const data = await fetchJson(url.toString());
+        renderRows(document.getElementById('pendingTbody'), data.items || [], true);
+        pendingState.page = data.page || 1;
+        pendingState.totalPages = data.totalPages || 1;
+        updatePagination(pendingState, document.getElementById('pendingInfo'), document.getElementById('pendingPrev'), document.getElementById('pendingNext'));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        spinner.classList.remove('show');
+      }
+    }
+
+    async function loadPlayed(page = 1) {
+      if (!BASE_URL) return;
+      const spinner = document.getElementById('playedSpinner');
+      spinner.classList.add('show');
+      try {
+        const url = new URL(BASE_URL);
+        url.searchParams.set('action', 'listPlayed');
+        url.searchParams.set('page', page);
+        url.searchParams.set('pageSize', PAGE_SIZE);
+        const data = await fetchJson(url.toString());
+        renderRows(document.getElementById('playedTbody'), data.items || []);
+        playedState.page = data.page || 1;
+        playedState.totalPages = data.totalPages || 1;
+        updatePagination(playedState, document.getElementById('playedInfo'), document.getElementById('playedPrev'), document.getElementById('playedNext'));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        spinner.classList.remove('show');
+      }
+    }
+
+    async function markPlayed(id, btn, spinner) {
+      if (!BASE_URL || !ADMIN_KEY) {
+        alert('BASE_URLまたはADMIN_KEYが設定されていません');
+        return;
+      }
+      if (!confirm('流した楽曲として処理しますか？')) return;
+      btn.disabled = true;
+      btn.classList.add('loading');
+      spinner.style.display = 'inline-block';
+      try {
+        const form = new URLSearchParams();
+        form.set('action', 'markPlayed');
+        form.set('id', id);
+        form.set('adminKey', ADMIN_KEY);
+        const data = await fetchJson(BASE_URL, { method: 'POST', body: form });
+        if (data && data.status === 'ok') {
+          loadPending(pendingState.page);
+          if (playedState.open) {
+            loadPlayed(1);
+          }
+        } else {
+          alert(data && data.message ? data.message : '処理に失敗しました');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('処理中にエラーが発生しました');
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('loading');
+        spinner.style.display = 'none';
+      }
+    }
+
+    document.getElementById('togglePlayedBtn').addEventListener('click', () => {
+      const card = document.getElementById('playedCard');
+      playedState.open = !playedState.open;
+      card.style.display = playedState.open ? 'block' : 'none';
+      document.getElementById('togglePlayedBtn').textContent = playedState.open ? '一覧を閉じる' : '一覧を開く';
+      document.getElementById('reloadPlayedBtn').disabled = !playedState.open;
+      if (playedState.open) {
+        loadPlayed(1);
+      }
+    });
+
+    document.getElementById('reloadPendingBtn').addEventListener('click', () => loadPending(pendingState.page));
+    document.getElementById('reloadPlayedBtn').addEventListener('click', () => loadPlayed(playedState.page));
+
+    document.getElementById('pendingPrev').addEventListener('click', () => {
+      if (pendingState.page > 1) loadPending(pendingState.page - 1);
+    });
+    document.getElementById('pendingNext').addEventListener('click', () => {
+      if (pendingState.page < pendingState.totalPages) loadPending(pendingState.page + 1);
+    });
+    document.getElementById('playedPrev').addEventListener('click', () => {
+      if (playedState.page > 1) loadPlayed(playedState.page - 1);
+    });
+    document.getElementById('playedNext').addEventListener('click', () => {
+      if (playedState.page < playedState.totalPages) loadPlayed(playedState.page + 1);
+    });
+
+    async function init() {
+      if (!BASE_URL) {
+        alert('config.js に BASE_URL を設定してください');
+        return;
+      }
+      loadPending(1);
+    }
+
+    init();
+  </script>
+</body>
+</html>
