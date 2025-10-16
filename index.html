@@ -1,173 +1,465 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>リクエストソング</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Noto Sans JP', sans-serif;
-            background-color: #f9f9f9;
-            color: #1b2538;
-        }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>音楽リクエスト</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f7fb;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.75rem;
+      padding: 16px;
+      background-color: #0f62fe;
+      color: white;
+      position: relative;
+      padding-right: 56px;
+    }
+    .header-share {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .header-share:hover { background: rgba(255, 255, 255, 0.24); }
+    .header-share svg { width: 20px; height: 20px; fill: currentColor; }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            margin-bottom: 10px;
-        }
-        .form-group input {
-            padding: 10px;
-            border-radius: 5px;
-            border: solid 0.5px;
-            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
-            font-size: 16px;
-        }
-        .form-group input:focus {
-            outline: none;
-            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
-        }
-        .form-group input[type="submit"] {
-            background-color: #003febc0;
-            color: #fff;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: .3s;
-        
-        }
-        .form-group input[type="submit"]:hover {
-            background-color: #003febdd;
-            transform: translate3d(0, 5px, 0);
-        }
-        .form-group span {
-            color: red;
-        }
+    #container {
+      max-width: 900px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+    p { text-align: center; margin-bottom: 24px; color: #666; }
 
-        .button{
-        width: 100px;
-        display: block;
-        margin: 0 auto;
-        padding: 12px 24px;
-        font-size: 13px;
-        font-weight: bold;
-        color: #fff;
-        background-color: #00cc22;
-        border: none;
-        border-radius: 5px;
-        transition: background-color 0.3s ease;
-        text-decoration: none;
-        text-align: center;
-        box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
-        margin-top: 50px;
-      }
+    /* Form Section */
+    .form-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid #e6e8eb;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    .form-section h2 { font-size: 1.25rem; margin-bottom: 16px; color: #0f62fe; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    input:focus, textarea:focus { outline: none; border-color: #0f62fe; box-shadow: 0 0 0 2px rgba(15, 98, 254, 0.1); }
+    textarea { height: 100px; resize: vertical; }
+    
+    button {
+      background-color: #0f62fe;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    button:hover { background-color: #0353e9; }
+    button:disabled { background-color: #8d8d8d; cursor: not-allowed; }
 
-      .button:hover {
-        background-color: #047e18;
-      }
+    .message { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; }
+    .success { background: #d1f4dd; color: #0c6a3c; border: 1px solid #a5d9c8; }
+    .error { background: #fee5e2; color: #a3261e; border: 1px solid #f4d1cf; }
 
-      .loader {
-  display: none;
-  position: fixed;
-  z-index: 9999;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  background: rgba(0, 0, 0, 0.6) url('https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/0.16.1/images/loader-large.gif') no-repeat center center;
-}
+    /* Spinner */
+    .spinner-inline { width: 24px; height: 24px; border: 3px solid #d9d9d9; border-top-color: #0f62fe; border-radius: 50%; animation: spin 1s linear infinite; margin: 12px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-.loader.show {
-  display: block;
-}
+    /* List Section */
+    .list-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid #e6e8eb;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    .list-section h2 { font-size: 1.25rem; margin-bottom: 16px; color: #0f62fe; }
 
-    </style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+    th {
+      background-color: #f3f3f3;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 2px solid #d0d0d0;
+    }
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    tr:hover { background-color: #f9f9f9; }
+    
+    .url-link { color: #0f62fe; text-decoration: none; word-break: break-all; }
+    .url-link:hover { text-decoration: underline; }
+
+    .status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+    .status-played { background: #e8e8e8; color: #555; }
+    .status-pending { background: #d1f4dd; color: #0c6a3c; }
+
+    /* Pagination */
+    .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+    .pagination button { padding: 8px 12px; min-width: 40px; }
+    .pagination button.active { background-color: #0f62fe; }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .empty-msg { text-align: center; color: #999; padding: 24px; }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5rem; }
+      table { font-size: 13px; }
+      td, th { padding: 8px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>楽曲リクエスト</h1>
-        <form action="https://docs.google.com/forms/u/2/d/e/1FAIpQLSeW7rek0Glc8KmBNQLhfZWJS56RZDU0nkI0MU4VtVaeRXKDSA/formResponse" method="post" target="hidden_iframe"
-        onsubmit="submitted=true;"class="c-form">
-            <div class="form-group">
-                <label for="song-name">曲名 <span>※必須</span></label>
-                <input type="text" name="entry.354949898" id="song-name" required>
-            </div>
-            <div class="form-group">
-                <label for="artist-name">アーティスト名 <span>※必須</span></label>
-                <input type="text" name="entry.714562996" id="artist-name" required>
-            </div>
-            <div class="form-group">
-                <label for="youtube-url">Youtube URL <span>※必須</span></label>
-                <input type="text" name="entry.414858915" id="youtube-url" required>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="送信">
-            </div>
-            <div class="loader"></div>
-        </form>
-        <br>
-        
-        <p>
-            ・リクエスト一覧の順番は週に１回ランダムで更新されます
-            <br>
-            ・過去にリクエストされた曲も放送します
-        </p>
+  <h1>
+    🎵 音楽リクエスト
+    <button type="button" class="header-share" id="shareBtn" aria-label="共有" title="共有">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7a3.27 3.27 0 0 0 0-1.39l7.02-4.11A2.99 2.99 0 1 0 14 5a3 3 0 0 0 .05.53L7.02 9.64a3 3 0 1 0 0 4.72l7.03 4.11c-.03.17-.05.34-.05.53a3 3 0 1 0 3-3.0z"/>
+      </svg>
+    </button>
+  </h1>
+
+  <div id="container">
+    <p>好きな曲をリクエストしてください！みんなのリクエストを表示しています。</p>
+
+    <!-- Form Section -->
+    <div class="form-section">
+      <h2>🎸 リクエストを送信</h2>
+      <div id="formMessage"></div>
+      <form id="requestForm">
+        <div class="form-group">
+          <label for="title">曲名 *</label>
+          <input type="text" id="title" name="title" required placeholder="例: Pretender">
+        </div>
+        <div class="form-group">
+          <label for="artist">アーティスト名 *</label>
+          <input type="text" id="artist" name="artist" required placeholder="例: Official髭男dism">
+        </div>
+        <div class="form-group">
+          <label for="url">YouTube URL *</label>
+          <input type="url" id="url" name="url" required placeholder="https://youtu.be/...">
+        </div>
+        <button type="submit">送信する</button>
+      </form>
     </div>
-  
-    <a class="button" href="answers.html">リクエスト一覧</a>
-</body>
-</html>
 
-<script type="text/javascript">
-<script type="text/javascript">
-    let submitted = false;
-    let isWaiting = false; // 連投防止用フラグ
-    const form = document.querySelector('form');
-    const loader = document.querySelector('.loader');
+    <!-- List Section -->
+    <div class="list-section">
+      <h2>📋 リクエスト一覧</h2>
+      <div id="listContent">
+        <div class="spinner-inline"></div>
+      </div>
+    </div>
+  </div>
 
-    form.addEventListener('submit', function(event) {
-        event.preventDefault(); // デフォルトのフォーム送信をキャンセル
+  <!-- Share Modal -->
+  <div id="shareModal" class="modal" aria-hidden="true" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; padding:16px; z-index:1000;">
+    <div class="modal-card" role="dialog" aria-modal="true" style="width:100%; max-width:380px; background:#fff; border-radius:12px; border:1px solid #e6e8eb; box-shadow:0 8px 24px rgba(0,0,0,0.12); overflow:hidden;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #eee;">
+        <h3>共有</h3>
+        <button type="button" id="shareClose" style="background:transparent; border:none; font-size:20px; line-height:1; cursor:pointer;">×</button>
+      </div>
+      <div style="padding:16px; display:flex; align-items:center; justify-content:center;">
+        <img id="qrImg" alt="QRコード" width="240" height="240" />
+      </div>
+      <div style="display:flex; gap:8px; padding:0 16px 16px;">
+        <input type="text" id="shareLink" readonly style="flex:1; border:1px solid #dfe3e8; padding:8px 10px; border-radius:6px;" />
+        <button type="button" id="copyLinkBtn" style="min-width:120px; height:36px;">リンクをコピー</button>
+      </div>
+      <div style="padding:0 16px 16px; display:flex; justify-content:flex-end;">
+        <button type="button" id="nativeShareBtn" style="min-width:120px; height:36px; display:none;">端末で共有</button>
+      </div>
+    </div>
+  </div>
 
-        if (isWaiting) {
-            alert("リクエストを送信しました。次の送信は3分間お待ちください。");
-            return;
+  <script src="config.js"></script>
+  <script>
+    (function() {
+      const cfg = window.MUSIC_REQUEST_CONFIG || {};
+      const BASE = cfg.GAS_BASE_URL || '';
+      const requestForm = document.getElementById('requestForm');
+      const formMessage = document.getElementById('formMessage');
+      const listContent = document.getElementById('listContent');
+      const shareBtn = document.getElementById('shareBtn');
+      const shareModal = document.getElementById('shareModal');
+      const shareClose = document.getElementById('shareClose');
+      const qrImg = document.getElementById('qrImg');
+      const shareLinkInput = document.getElementById('shareLink');
+      const copyLinkBtn = document.getElementById('copyLinkBtn');
+      const nativeShareBtn = document.getElementById('nativeShareBtn');
+
+      let currentPage = 1;
+      const itemsPerPage = 10;
+      let allRequests = [];
+
+      // Check if configured
+      if (!BASE) {
+        listContent.innerHTML = '<div class="empty-msg">⚠️ 設定が未完了です（config.js を確認してください）</div>';
+      }
+
+      // Share modal logic
+      function openShare() {
+        const url = window.location.href;
+        shareLinkInput.value = url;
+        qrImg.src = 'https://ikenbako.github.io/html/QR_233400.png'; // Static QR
+        shareModal.style.display = 'flex';
+        shareModal.setAttribute('aria-hidden', 'false');
+        if (navigator.share) {
+          nativeShareBtn.style.display = '';
+        } else {
+          nativeShareBtn.style.display = 'none';
+        }
+      }
+      function closeShare() {
+        shareModal.style.display = 'none';
+        shareModal.setAttribute('aria-hidden', 'true');
+      }
+      shareBtn && shareBtn.addEventListener('click', openShare);
+      shareClose && shareClose.addEventListener('click', closeShare);
+      shareModal && shareModal.addEventListener('click', (e) => {
+        if (e.target === shareModal) closeShare();
+      });
+      copyLinkBtn && copyLinkBtn.addEventListener('click', async () => {
+        const url = shareLinkInput.value;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(url);
+          } else {
+            shareLinkInput.select();
+            document.execCommand('copy');
+          }
+          copyLinkBtn.textContent = 'コピーしました';
+          setTimeout(() => (copyLinkBtn.textContent = 'リンクをコピー'), 1500);
+        } catch (_) { alert('コピーに失敗しました'); }
+      });
+      nativeShareBtn && nativeShareBtn.addEventListener('click', async () => {
+        try { await navigator.share({ title: document.title, url: window.location.href }); } catch (_) {}
+      });
+
+      // Rate limiting and duplicate check
+      const SUBMIT_LIMIT = 3;
+      const HOUR_MS = 3600000; // 1時間
+      const STORAGE_KEY = 'musicRequest_submits';
+
+      function getSubmitHistory() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) return [];
+        try {
+          const data = JSON.parse(stored);
+          const now = Date.now();
+          // Remove old entries (older than 1 hour)
+          return data.filter(ts => now - ts < HOUR_MS);
+        } catch {
+          return [];
+        }
+      }
+
+      function addSubmitHistory() {
+        const history = getSubmitHistory();
+        history.push(Date.now());
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      }
+
+      function checkRateLimit() {
+        const history = getSubmitHistory();
+        if (history.length >= SUBMIT_LIMIT) {
+          const oldestSubmit = history[0];
+          const now = Date.now();
+          const waitMs = HOUR_MS - (now - oldestSubmit);
+          const waitMin = Math.ceil(waitMs / 60000);
+          return {
+            allowed: false,
+            message: `送信回数の上限に達しました。あと${waitMin}分後に再度送信できます。`
+          };
+        }
+        return { allowed: true };
+      }
+
+      function checkDuplicate(title, artist) {
+        // Check if same song (title + artist) already exists
+        const exists = allRequests.some(req => 
+          req.title === title && req.artist === artist
+        );
+        return exists;
+      }
+
+      // Form submit
+      requestForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('title').value.trim();
+        const artist = document.getElementById('artist').value.trim();
+        const url = document.getElementById('url').value.trim();
+
+        if (!title || !artist || !url) {
+          formMessage.innerHTML = '<div class="message error">全ての項目を入力してください</div>';
+          return;
         }
 
-        loader.classList.add('show'); // ローディングスピナーを表示
+        // Check rate limit
+        const rateCheck = checkRateLimit();
+        if (!rateCheck.allowed) {
+          formMessage.innerHTML = `<div class="message error">❌ ${rateCheck.message}</div>`;
+          return;
+        }
 
-        setTimeout(function() {
-            form.submit(); // フォームを送信
-            loader.classList.remove('show'); // ローディングスピナーを非表示
-            submitted = true;
-            isWaiting = true; // 連投防止フラグを有効化
-            setTimeout(() => {
-                isWaiting = false; // 3分後に連投可能に
-            }, 180000); // 180000ミリ秒 = 3分
-        }, 2000); // 送信までの遅延時間（ここでは2秒）
-    });
-</script>
+        // Check duplicate
+        if (checkDuplicate(title, artist)) {
+          formMessage.innerHTML = '<div class="message error">❌ この楽曲は既にリスト内にあります</div>';
+          return;
+        }
 
-</script>
-<iframe
-    name="hidden_iframe"
-    id="hidden_iframe"
-    style="display: none"
-    onload="if(submitted){window.location='ok.html';}"
-></iframe>
+        try {
+          // Show loading spinner
+          formMessage.innerHTML = '<div style="display:flex; align-items:center; gap:8px;"><div class="spinner-inline" style="margin:0;"></div>送信中...</div>';
+          const submitBtn = requestForm.querySelector('button[type="submit"]');
+          submitBtn.disabled = true;
+
+          const form = new URLSearchParams();
+          form.set('mode', 'add');
+          form.set('title', title);
+          form.set('artist', artist);
+          form.set('url', url);
+
+          const res = await fetch(BASE, { method: 'POST', body: form });
+          const data = await res.json();
+
+          if (data && data.status === 'ok') {
+            addSubmitHistory(); // Record submission
+            formMessage.innerHTML = '<div class="message success">✅ リクエストを送信しました！</div>';
+            requestForm.reset();
+            currentPage = 1;
+            loadList();
+          } else {
+            formMessage.innerHTML = `<div class="message error">❌ ${data.message || 'エラーが発生しました'}</div>`;
+          }
+        } catch (err) {
+          console.error('Fetch error:', err);
+          formMessage.innerHTML = `<div class="message error">❌ ${err.message}</div>`;
+        } finally {
+          const submitBtn = requestForm.querySelector('button[type="submit"]');
+          submitBtn.disabled = false;
+        }
+      });
+
+      // Load list
+      async function loadList() {
+        listContent.innerHTML = '<div class="spinner-inline"></div>';
+        try {
+          const url = `${BASE}?mode=list`;
+          const res = await fetch(url);
+          const data = await res.json();
+
+          console.log('List data:', data);
+          allRequests = Array.isArray(data) ? data : [];
+          renderList();
+        } catch (err) {
+          console.error('Load list error:', err);
+          listContent.innerHTML = `<div class="empty-msg">リスト読み込みエラー: ${err.message}</div>`;
+        }
+      }
+
+      // Render list with pagination
+      function renderList() {
+        if (!allRequests || allRequests.length === 0) {
+          listContent.innerHTML = '<div class="empty-msg">リクエストがまだありません</div>';
+          return;
+        }
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const pageItems = allRequests.slice(start, end);
+        const totalPages = Math.ceil(allRequests.length / itemsPerPage);
+
+        let html = '<table><thead><tr><th>曲名</th><th>アーティスト</th><th>YouTube</th><th>状態</th></tr></thead><tbody>';
+        
+        pageItems.forEach(req => {
+          const statusClass = req.status === '再生済み' ? 'status-played' : 'status-pending';
+          const statusText = req.status === '再生済み' ? '再生済み' : '未再生';
+
+          html += `<tr>
+            <td>${escapeHtml(req.title)}</td>
+            <td>${escapeHtml(req.artist)}</td>
+            <td><a href="${escapeHtml(req.url)}" target="_blank" class="url-link" title="${escapeHtml(req.url)}">🔗 リンク</a></td>
+            <td><span class="status ${statusClass}">${statusText}</span></td>
+          </tr>`;
+        });
+
+        html += '</tbody></table>';
+
+        if (totalPages > 1) {
+          html += '<div class="pagination">';
+          if (currentPage > 1) {
+            html += `<button onclick="window.musicRequest.setPage(${currentPage - 1})">← 前へ</button>`;
+          }
+          for (let i = 1; i <= totalPages; i++) {
+            const active = i === currentPage ? 'active' : '';
+            html += `<button class="${active}" onclick="window.musicRequest.setPage(${i})">${i}</button>`;
+          }
+          if (currentPage < totalPages) {
+            html += `<button onclick="window.musicRequest.setPage(${currentPage + 1})">次へ →</button>`;
+          }
+          html += '</div>';
+        }
+
+        listContent.innerHTML = html;
+      }
+
+      function extractYoutubeId(url) {
+        const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+        const match = url.match(regex);
+        return match ? match[1] : null;
+      }
+
+      function escapeHtml(text) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, m => map[m]);
+      }
+
+      // Public API for pagination
+      window.musicRequest = {
+        setPage(page) {
+          currentPage = page;
+          renderList();
+          document.querySelector('.list-section').scrollIntoView({ behavior: 'smooth' });
+        }
+      };
+
+      // Initial load
+      loadList();
+    })();
+  </script>
+</body>
+</html>
